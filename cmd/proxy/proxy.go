@@ -18,6 +18,10 @@ import (
 
 var config schema.ProxyConfig
 
+func init() {
+	loadConfig()
+}
+
 // TODO: load from file
 // Loads proxy configuration
 func loadConfig() {
@@ -32,8 +36,6 @@ func loadConfig() {
 // TODO: add protocol, assuming http for now
 // Start Proxy
 func Start() {
-
-	loadConfig()
 
 	addr := strings.Join([]string{config.Host, fmt.Sprint(config.Port)}, ":")
 	proxy := http.HandlerFunc(Handler)

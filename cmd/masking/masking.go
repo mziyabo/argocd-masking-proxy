@@ -2,18 +2,22 @@ package masking
 
 import (
 	"regexp"
+	"strings"
 )
+
+func init() {
+	// Load config
+	// Read manifest
+}
 
 // perform masking operation
 func Mask(data string) string {
 
-	// load config
-	// read manifest
+	data = strings.ReplaceAll(data, `\\\`, "\\")
 
-	//r := regexp.MustCompile(`client(_?Secret|ID):\s?\\?\"?[a-z0-9]*(\\\"|\"|\s)?`)
-	r := regexp.MustCompile(`client(_?Secret|ID)`)
-	data = r.ReplaceAllString(data, "private.******")
-	// data = strings.Replace(data, "AIzaSyDol1GJR0myfynTGuHLnf2HITViVHpYfqg", "private.******", -1)
+	// GitHub OAUTH client details:
+	r := regexp.MustCompile(`(client(_?Secret|ID)):((\s?\\?\"?)([a-z0-9]*)(\\\"|\"|\s)?)`)
+	data = r.ReplaceAllString(data, "$1:$4******$6")
 
 	return data
 }

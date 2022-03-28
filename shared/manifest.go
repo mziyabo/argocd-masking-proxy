@@ -5,12 +5,11 @@ import (
 	"log"
 )
 
-// 
+//
 func Manifest(data string) string {
-
 	var manifestJson string
-	json.Unmarshal([]byte(data), &manifestJson)
 
+	json.Unmarshal([]byte(data), &manifestJson)
 	log.Print(manifestJson)
 
 	return "NotImplemented"
