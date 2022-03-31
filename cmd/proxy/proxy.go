@@ -1,36 +1,24 @@
 package proxy
 
 import (
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
 	"net"
 	"net/http"
-	"net/url"
-	"reflect"
 	"strings"
 
-	"github.com/fatih/color"
+	color "github.com/fatih/color"
 
 	masking "github.com/mziyabo/masking-proxy/cmd/masking"
-	schema "github.com/mziyabo/masking-proxy/shared/schema"
+	"github.com/mziyabo/masking-proxy/shared"
 )
 
-var config schema.ProxyConfig
+var config shared.ProxyConfig
 
 func init() {
-	loadConfig()
-}
-
-// TODO: load from file
-// Loads proxy configuration
-func loadConfig() {
-
-	fmt.Println("Loading config")
-
-	config.ApiServerUrl, _ = url.Parse("http://127.0.0.1:8001")
-	config.Host = "127.0.0.1"
-	config.Port = 3003
+	config = shared.Config
 }
 
 // TODO: add protocol, assuming http for now
@@ -40,18 +28,27 @@ func Start() {
 	addr := strings.Join([]string{config.Host, fmt.Sprint(config.Port)}, ":")
 	proxy := http.HandlerFunc(Handler)
 
+	var listenErr error
+
 	color.Cyan("Listening at: %s\n", addr)
 
-	err := http.ListenAndServe(addr, proxy)
-	if err != nil {
-		log.Panicf("Failed to listen on address: %s", addr)
+	// TODO: fix tls
+	if config.TLSConfig.Enabled {
+		listenErr = http.ListenAndServeTLS(addr, config.TLSConfig.Cert, config.TLSConfig.Key, proxy)
+	} else {
+		listenErr = http.ListenAndServe(addr, proxy)
 	}
 
+	if listenErr != nil {
+		_ = fmt.Errorf("Failed to listen on address: %s", addr)
+		log.Panic(listenErr)
+	}
 }
 
 // Proxy http handler
 func Handler(rw http.ResponseWriter, req *http.Request) {
 
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	apiServerUrl := config.ApiServerUrl
 
 	req.Host = apiServerUrl.Host
@@ -63,8 +60,6 @@ func Handler(rw http.ResponseWriter, req *http.Request) {
 
 	req.Header.Set("X-Forwarded-For", addr)
 	resp, err := http.DefaultClient.Do(req)
-
-	fmt.Printf("ResponseWriter Type: %s\n", reflect.TypeOf(rw))
 
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -80,32 +75,22 @@ func Handler(rw http.ResponseWriter, req *http.Request) {
 
 	// Return response content
 	rw.WriteHeader(resp.StatusCode)
+	rw.Header().Del("Content-Length")
+
 	defer resp.Body.Close()
-	var b []byte
+	var data []byte
 
-	switch resp.Header.Get("Content-Encoding") {
-	case "gzip":
-		b, err = io.ReadAll(resp.Body)
-		if err != nil {
-			log.Panic(err)
-		}
-	default:
-		b, _ = io.ReadAll(resp.Body)
-	}
-
+	data, err = io.ReadAll(resp.Body)
 	if err != nil {
 		log.Panic(err)
 	}
 
 	// Start masking work here
 	// Do some conversions and parsing first...
-	body := string(b)
+	body := masking.Mask(data)
 
-	body = masking.Mask(body)
-	back := []byte(body)
-
-	go log.Println(rw.Header())
+	// go log.Println(rw.Header())
 
 	// Bring it back
-	rw.Write(back)
+	rw.Write(body)
 }
