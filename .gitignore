@@ -1,4 +1,5 @@
 NOTES
 .vscode
 certs/*
+certs
 proxy.conf.json

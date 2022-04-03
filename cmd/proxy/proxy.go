@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 
 	color "github.com/fatih/color"
@@ -56,6 +57,15 @@ func Handler(rw http.ResponseWriter, req *http.Request) {
 	req.URL.Scheme = apiServerUrl.Scheme
 	req.RequestURI = ""
 
+	// TODO: should be in config.go!!
+	// Read token in from /var/run
+	dat, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
+	if err != nil {
+		log.Printf("%s\n", err)
+	} else {
+		req.Header.Add("Authorization", ("Bearer " + string(dat)))
+	}
+
 	addr, _, _ := net.SplitHostPort(req.RemoteAddr)
 
 	req.Header.Set("X-Forwarded-For", addr)
@@ -89,7 +99,10 @@ func Handler(rw http.ResponseWriter, req *http.Request) {
 	// Do some conversions and parsing first...
 	body := masking.Mask(data)
 
-	// go log.Println(rw.Header())
+	// TODO: fix logging levels
+	go log.Println(rw.Header())
+	go log.Println(string(body))
+	go log.Println("---")
 
 	// Bring it back
 	rw.Write(body)

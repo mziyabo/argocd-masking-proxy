@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/name: masking-proxy
+  name: masking-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: masking-proxy
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/name: masking-proxy
+    spec:
+      serviceAccount: masking-proxy
+      serviceAccountName: masking-proxy
+      containers:
+      - image: masking-proxy-internal:integration
+        name: masking-proxy
+        imagePullPolicy: Never
+        ports:
+          - containerPort: 3003
+            protocol: TCP
+      dnsPolicy: ClusterFirst
+        

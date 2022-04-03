@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: example
+data:
+   jcasc-default-config.yaml: |-
+    jenkins:
+      authorizationStrategy:
+        loggedInUsersCanDoAnything:
+          allowAnonymousRead: false
+      securityRealm:
+        github:
+          clientID: "32f2133d7bd2d2215c6a"
+          clientSecret: "e7da32a32a7ff720a3f007c07701777a2723c7c7"
