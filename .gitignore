@@ -3,3 +3,4 @@ NOTES
 certs/*
 certs
 proxy.conf.json
+.pre-commit-config.yaml
