@@ -15,6 +15,10 @@ spec:
     port: 3003
     protocol: TCP
     targetPort: 3003
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 3003
   selector:
     app.kubernetes.io/name: masking-proxy
   sessionAffinity: None

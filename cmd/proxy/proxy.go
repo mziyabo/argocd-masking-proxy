@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -8,7 +9,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	color "github.com/fatih/color"
 
@@ -52,12 +55,18 @@ func Handler(rw http.ResponseWriter, req *http.Request) {
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	apiServerUrl := config.ApiServerUrl
 
+	req.Close = true
+
 	req.Host = apiServerUrl.Host
 	req.URL.Host = apiServerUrl.Host
 	req.URL.Scheme = apiServerUrl.Scheme
 	req.RequestURI = ""
 
-	// TODO: should be in config.go!!
+	// DEBUG
+	fmt.Println(req.URL)
+	fmt.Println(req.Context())
+
+	// TODO: should be in config.go!!!
 	// Read token in from /var/run
 	dat, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
 	if err != nil {
@@ -68,8 +77,10 @@ func Handler(rw http.ResponseWriter, req *http.Request) {
 
 	addr, _, _ := net.SplitHostPort(req.RemoteAddr)
 
+	client := http.Client{Timeout: 300 * time.Second}
+
 	req.Header.Set("X-Forwarded-For", addr)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 
 	if err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
@@ -85,24 +96,40 @@ func Handler(rw http.ResponseWriter, req *http.Request) {
 
 	// Return response content
 	rw.WriteHeader(resp.StatusCode)
-	rw.Header().Del("Content-Length")
 
 	defer resp.Body.Close()
-	var data []byte
 
-	data, err = io.ReadAll(resp.Body)
-	if err != nil {
-		log.Panic(err)
+	if resp.Header.Get("Content-Length") != "" {
+		contentLength, strconvErr := strconv.Atoi(resp.Header.Get("Content-Length"))
+		fmt.Println(contentLength)
+		if strconvErr != nil {
+			fmt.Println(strconvErr)
+		}
+
+	}
+	var data []byte
+	reader := bytes.NewBuffer(data)
+	var readerErr error
+
+	count, readerErr := io.Copy(reader, resp.Body)
+	data = reader.Bytes()
+
+	if readerErr != nil {
+		log.Println(resp.Status)
+		log.Println(resp.Request.URL)
+		log.Println(readerErr)
 	}
 
 	// Start masking work here
 	// Do some conversions and parsing first...
 	body := masking.Mask(data)
+	//rw.Header().Add("Content-Length", fmt.Sprint(len(data)))
+
+	log.Printf("DATA-PRE: %s, DATA-POST: %s", fmt.Sprint(count), fmt.Sprint(len(body)))
+	//l := len(data)
 
 	// TODO: fix logging levels
-	go log.Println(rw.Header())
-	go log.Println(string(body))
-	go log.Println("---")
+	log.Println(rw.Header())
 
 	// Bring it back
 	rw.Write(body)

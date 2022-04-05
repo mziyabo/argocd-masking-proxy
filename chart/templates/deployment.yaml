@@ -20,7 +20,7 @@ spec:
       serviceAccount: masking-proxy
       serviceAccountName: masking-proxy
       containers:
-      - image: masking-proxy-internal:integration
+      - image: masking-proxy-internal:passthrough
         name: masking-proxy
         imagePullPolicy: Never
         ports:
