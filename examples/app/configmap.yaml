@@ -3,6 +3,8 @@ kind: ConfigMap
 metadata:
   creationTimestamp: null
   name: example
+  annotations:
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
 data:
    jcasc-default-config.yaml: |-
     jenkins:
