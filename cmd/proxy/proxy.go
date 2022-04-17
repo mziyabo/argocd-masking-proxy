@@ -8,8 +8,6 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -25,26 +23,23 @@ func init() {
 	config = shared.Config
 }
 
-// TODO: add protocol, assuming http for now
-// Start Proxy
+// Start proxy
 func Start() {
 
-	addr := strings.Join([]string{config.Host, fmt.Sprint(config.Port)}, ":")
+	proxyAddr := strings.Join([]string{config.Host, fmt.Sprint(config.Port)}, ":")
 	proxy := http.HandlerFunc(Handler)
 
+	color.Cyan("Listening at: %s\n", proxyAddr)
+
 	var listenErr error
-
-	color.Cyan("Listening at: %s\n", addr)
-
-	// TODO: fix tls
 	if config.TLSConfig.Enabled {
-		listenErr = http.ListenAndServeTLS(addr, config.TLSConfig.Cert, config.TLSConfig.Key, proxy)
+		listenErr = http.ListenAndServeTLS(proxyAddr, config.TLSConfig.Cert, config.TLSConfig.Key, proxy)
 	} else {
-		listenErr = http.ListenAndServe(addr, proxy)
+		listenErr = http.ListenAndServe(proxyAddr, proxy)
 	}
 
 	if listenErr != nil {
-		_ = fmt.Errorf("Failed to listen on address: %s", addr)
+		_ = fmt.Errorf("failed to listen on address: %s", proxyAddr)
 		log.Panic(listenErr)
 	}
 }
@@ -52,34 +47,22 @@ func Start() {
 // Proxy http handler
 func Handler(rw http.ResponseWriter, req *http.Request) {
 
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	apiServerUrl := config.ApiServerUrl
-
 	req.Close = true
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
-	req.Host = apiServerUrl.Host
-	req.URL.Host = apiServerUrl.Host
-	req.URL.Scheme = apiServerUrl.Scheme
+	apiURL := config.ApiURL
+
+	req.Host = apiURL.Host
+	req.URL.Host = apiURL.Host
+	req.URL.Scheme = apiURL.Scheme
 	req.RequestURI = ""
 
-	// DEBUG
-	fmt.Println(req.URL)
-	fmt.Println(req.Context())
+	remoteAddr, _, _ := net.SplitHostPort(req.RemoteAddr)
 
-	// TODO: should be in config.go!!!
-	// Read token in from /var/run
-	dat, err := os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
-	if err != nil {
-		log.Printf("%s\n", err)
-	} else {
-		req.Header.Add("Authorization", ("Bearer " + string(dat)))
-	}
-
-	addr, _, _ := net.SplitHostPort(req.RemoteAddr)
+	req.Header.Set("X-Forwarded-For", remoteAddr)
+	req.Header.Add("Authorization", strings.Join([]string{"Bearer", config.Token}, " "))
 
 	client := http.Client{Timeout: 300 * time.Second}
-
-	req.Header.Set("X-Forwarded-For", addr)
 	resp, err := client.Do(req)
 
 	if err != nil {
@@ -94,43 +77,23 @@ func Handler(rw http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	// Return response content
-	rw.WriteHeader(resp.StatusCode)
-
 	defer resp.Body.Close()
 
-	if resp.Header.Get("Content-Length") != "" {
-		contentLength, strconvErr := strconv.Atoi(resp.Header.Get("Content-Length"))
-		fmt.Println(contentLength)
-		if strconvErr != nil {
-			fmt.Println(strconvErr)
-		}
+	rw.WriteHeader(resp.StatusCode)
 
-	}
 	var data []byte
 	reader := bytes.NewBuffer(data)
-	var readerErr error
 
-	count, readerErr := io.Copy(reader, resp.Body)
+	_, readerErr := io.Copy(reader, resp.Body)
 	data = reader.Bytes()
 
 	if readerErr != nil {
-		log.Println(resp.Status)
-		log.Println(resp.Request.URL)
-		log.Println(readerErr)
+		_ = fmt.Errorf("ReaderError: %s", readerErr)
 	}
 
 	// Start masking work here
 	// Do some conversions and parsing first...
 	body := masking.Mask(data)
-	//rw.Header().Add("Content-Length", fmt.Sprint(len(data)))
 
-	log.Printf("DATA-PRE: %s, DATA-POST: %s", fmt.Sprint(count), fmt.Sprint(len(body)))
-	//l := len(data)
-
-	// TODO: fix logging levels
-	log.Println(rw.Header())
-
-	// Bring it back
 	rw.Write(body)
 }

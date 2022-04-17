@@ -14,18 +14,21 @@ func init() {
 func Mask(d []byte) []byte {
 
 	data := string(d)
-	data = strings.ReplaceAll(data, `\\\`, "\\")
 
 	// GitHub OAUTH client details:
-	r := regexp.MustCompile(`(client(_?Secret|ID)):((\s?\\?\"?)([a-z0-9]*)(\\\"|\"|\s)?)`)
-	data = r.ReplaceAllString(data, "$1:$4******$6")
+	r := regexp.MustCompile(`(client(_?Secret|ID)):((\s?\\+\"?)([a-z0-9]*)(\\\"|\"|\s)?)`)
 
-	// pad := strings.Join([]string{"%-", fmt.Sprint((len(d) - len(data))), "s"}, "")
-	// g := fmt.Sprintf(pad, data)
-	g := []byte(data)
-	g = append(g, make([]byte, (len(d)-len(data)))...)
+	if r.Match([]byte(data)) {
 
-	s := strings.ReplaceAll(string(g), "\x00", " ")
+		data = r.ReplaceAllString(data, "$1:$4******$6")
 
-	return ([]byte(s))
+		g := []byte(data)
+		g = append(g, make([]byte, (len(d)-len(data)))...)
+
+		s := strings.ReplaceAll(string(g), "\x00", " ")
+
+		return []byte(s)
+	}
+
+	return d
 }
