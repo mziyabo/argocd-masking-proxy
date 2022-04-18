@@ -1,0 +1,16 @@
+{
+    "CN": "masking-proxy",
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "ZA",
+            "L": "Cape Town",
+            "O": "www",
+            "OU": "",
+            "ST": "Western Province"
+        }
+    ]
+}

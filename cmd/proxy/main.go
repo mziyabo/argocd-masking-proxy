@@ -1,4 +1,20 @@
-package proxy
+/*
+   Copyright [2022] [mziyabo]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+package main
 
 import (
 	"bytes"
@@ -11,25 +27,25 @@ import (
 	"strings"
 	"time"
 
-	color "github.com/fatih/color"
-
 	masking "github.com/mziyabo/masking-proxy/cmd/masking"
-	"github.com/mziyabo/masking-proxy/shared"
+	"github.com/mziyabo/masking-proxy/cmd/shared"
 )
 
 var config shared.ProxyConfig
 
-func init() {
-	config = shared.Config
+func main() {
+	Start()
 }
 
-// Start proxy
+// Start begins listening and serving at configured address
 func Start() {
+
+	config = shared.Config
 
 	proxyAddr := strings.Join([]string{config.Host, fmt.Sprint(config.Port)}, ":")
 	proxy := http.HandlerFunc(Handler)
 
-	color.Cyan("Listening at: %s\n", proxyAddr)
+	log.Printf("Listening at: %s\n", proxyAddr)
 
 	var listenErr error
 	if config.TLSConfig.Enabled {

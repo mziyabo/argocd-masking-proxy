@@ -5,7 +5,6 @@ import (
 	"log"
 )
 
-//
 func Manifest(data string) string {
 	var manifestJson string
 
