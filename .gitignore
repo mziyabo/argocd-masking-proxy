@@ -1,6 +1,9 @@
 NOTES
 .vscode
-certs/*
-certs
+# certs/*
+# certs
 proxy.conf.json
 .pre-commit-config.yaml
+bin
+*.csr
+*.pem

@@ -1,0 +1,7 @@
+{
+    "CN": "masking-proxy.argocd.svc.cluster.local",
+    "hosts": [
+        "127.0.0.1",
+        "masking-proxy.argocd.svc.cluster.local"
+    ]
+}
