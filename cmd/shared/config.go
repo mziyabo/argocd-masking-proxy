@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
@@ -20,6 +21,7 @@ func init() {
 	Config.ApiURL, _ = url.Parse(viper.GetString("target"))
 	Config.Port = viper.GetInt("serve.port")
 	Config.Host = viper.GetString("serve.host")
+	Config.Rules = getRules()
 	tokenBytes, err := os.ReadFile(tokenDir)
 	if err != nil {
 		log.Printf("%s\n", err)
@@ -62,8 +64,12 @@ type ProxyRule struct {
 	// Target Kubernetes api object type
 	// Kind string
 
+	Id          string
+	Name        string
+	Description string
+
 	// Regex pattern to mask
-	RegexPattern string
+	Pattern string
 
 	// Regex replacement string
 	Replacement string
@@ -73,7 +79,7 @@ type ProxyRule struct {
 	// IncludeFields []string
 }
 
-// Read proxy.conf.json file
+// readConfig reads proxy config from disk
 func readConfig() {
 
 	// Name of config file (without extension)
@@ -89,4 +95,16 @@ func readConfig() {
 	if err != nil {
 		panic(fmt.Errorf("fatal error config file: %w", err))
 	}
+}
+
+func getRules() []ProxyRule {
+	r, _ := json.Marshal(viper.Get("rules"))
+
+	rules := []ProxyRule{}
+	err := json.Unmarshal(r, &rules)
+
+	if err != nil {
+		_ = fmt.Errorf("%s/n", err)
+	}
+	return rules
 }

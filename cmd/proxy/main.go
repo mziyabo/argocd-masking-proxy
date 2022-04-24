@@ -37,7 +37,7 @@ func main() {
 	Start()
 }
 
-// Start begins listening and serving at configured address
+// Start begins listening and serving at configured proxy address
 func Start() {
 
 	config = shared.Config
@@ -55,7 +55,7 @@ func Start() {
 	}
 
 	if listenErr != nil {
-		_ = fmt.Errorf("failed to listen on address: %s", proxyAddr)
+		_ = fmt.Errorf("failed to listen on address: [%s]", proxyAddr)
 		log.Panic(listenErr)
 	}
 }

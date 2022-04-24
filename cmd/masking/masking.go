@@ -3,31 +3,36 @@ package masking
 import (
 	"regexp"
 	"strings"
+
+	"github.com/mziyabo/masking-proxy/cmd/shared"
 )
 
+var config shared.ProxyConfig
+
 func init() {
-	// Load config
-	// Read manifest
+	config = shared.Config
 }
 
-// perform masking operation
+// Mask performs data-masking operation based off proxy config rules
 func Mask(d []byte) []byte {
 
 	data := string(d)
 
-	// GitHub OAUTH client details:
-	r := regexp.MustCompile(`(client(_?Secret|ID)):((\s?\\+\"?)([a-z0-9]*)(\\\"|\"|\s)?)`)
+	for _, rule := range config.Rules {
+		r := regexp.MustCompile(rule.Pattern)
 
-	if r.Match([]byte(data)) {
+		if r.Match([]byte(data)) {
 
-		data = r.ReplaceAllString(data, "$1:$4******$6")
+			data = r.ReplaceAllString(data, rule.Replacement)
 
-		g := []byte(data)
-		g = append(g, make([]byte, (len(d)-len(data)))...)
+			// TODO: shorten this up
+			// pad byte-array to maintain content-length
+			g := []byte(data)
+			g = append(g, make([]byte, (len(d)-len(data)))...)
+			s := strings.ReplaceAll(string(g), "\x00", " ")
 
-		s := strings.ReplaceAll(string(g), "\x00", " ")
-
-		return []byte(s)
+			d = []byte(s)
+		}
 	}
 
 	return d
