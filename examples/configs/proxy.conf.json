@@ -1,0 +1,22 @@
+{
+    "serve": {
+        "port": "3003",
+        "host": "",
+        "tls":{
+            "enabled": true,
+            "cert": "localhost.pem",
+            "certKey": "localhost-key.pem"
+        } 
+    },
+    "target": "http://localhost:8001/",
+    "rules": [
+        {
+            "id": "1",
+            "name": "github_oauth_client",
+            "description": "GitHub OAUTH client details",
+            "pattern": "(client(_?Secret|ID)):((\\s?\\\\+\"?)([a-z0-9]*)(\\\\\"|\"|\\s)?)",
+            "replacement": "$1:$4******$6"
+        }
+    ],
+    "logLevel": "DEBUG"
+}
