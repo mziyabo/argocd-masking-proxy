@@ -24,6 +24,7 @@ IMAGE_NAME= masking-proxy-internal
 build:
 	go build -o ./bin/${BINARY_NAME} ./cmd/proxy
 
+# TODO: use docker to run this- as certs are being generated in Dockerfile
 build_and_run:
 	go build -o ./bin/${BINARY_NAME} ./cmd/proxy
 	cp -r ./certs ./bin

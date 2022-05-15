@@ -3,13 +3,13 @@ kind: ClusterRoleBinding
 metadata:
   annotations:
   labels:
-    app.kubernetes.io/name: masking-proxy
-  name: masking-proxy
+    {{- include "masking-proxy.labels" . | nindent 4 }}
+  name: {{ include "masking-proxy.fullname" . }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: cluster-admin
 subjects:
 - kind: ServiceAccount
-  name: masking-proxy
-  namespace: argocd
+  name: {{ include "masking-proxy.fullname" . }}
+  namespace: {{ .Values.namespace }}
