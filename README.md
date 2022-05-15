@@ -3,7 +3,7 @@
 
 masking-proxy creates an external Argo CD cluster that proxies connections to a Kubernetes API server in order to mask sensitive data out.
 
-Some data, such as that in ConfigMaps can get leaked out in the ArgoCD UI through the **Live Manifest** or **DIFF**, which we wanted to mask out after the Kubernetes templates.
+Some data, such as that in ConfigMaps can get leaked out in the ArgoCD UI through the **Live Manifest** or **DIFF**, which we wanted to mask out with this proxy.
 
 ### Prerequisites
 - Kubernetes 1.18+
