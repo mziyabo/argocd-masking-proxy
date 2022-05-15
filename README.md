@@ -12,7 +12,7 @@ Some data, such as that in ConfigMaps can get leaked out in the ArgoCD UI throug
 ### Installation
 ``` bash
 ## clone repo
-git clone git@github.com:mziyabo/masking-proxy.git
+git clone git@github.com:mziyabo/argocd-masking-proxy.git
 cd masking-proxy
 
 ## install the masking-proxy helm chart
