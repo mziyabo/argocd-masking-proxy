@@ -26,7 +26,7 @@ spec:
             protocol: TCP
         volumeMounts:
         - name: proxyconf
-          mountPath: "/root/.kubemask"
+          mountPath: "/root/"
           readOnly: true
       volumes:
       - name: proxyconf

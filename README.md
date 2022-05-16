@@ -37,7 +37,7 @@ metadata:
 spec:
   destination:
     namespace: sample
-    server: https://masking-proxy.argocd.svc.cluster.local
+    server: https://masking-proxy.masking-proxy.svc.cluster.local
   project: default
   source:
     path: examples/app
@@ -49,7 +49,7 @@ spec:
 EOF
 ```
 
-Note we create an application with the `server` property pointing to the `masking-proxy` cluster.
+Note we create an application with the `destination.server` property pointing to the `masking-proxy` cluster.
 
 Check the `Argo CD` UI and the configmap will have masked out the regex pattern in the `proxy.conf.json` i.e. `(client(_?Secret|ID)):((\\s?\\\\+\"?)([a-z0-9]*)(\\\\\"|\"|\\s)?)`
 

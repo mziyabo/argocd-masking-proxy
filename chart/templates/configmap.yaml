@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "masking-proxy.labels" . | nindent 4 }}
 data:
-  proxy.conf.json: |-
+  .kubemask: |-
     {
         "serve": {
             "port": "3003",
